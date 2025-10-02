@@ -1,6 +1,0 @@
-Django>=4.2,<5.0
-python-decouple>=3.8
-whitenoise>=6.4.0
-dj-database-url>=1.0.0
-django-extensions>=3.2.1
-django-health-check>=3.16.5
