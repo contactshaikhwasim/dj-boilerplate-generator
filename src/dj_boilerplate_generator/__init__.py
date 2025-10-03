@@ -9,6 +9,6 @@ __author__ = "Enterprise Django Team"
 __email__ = "dev@enterprise-django.com"
 
 from .cli import main
-from generators.base_generator import BaseGenerator
+from  dj_boilerplate_generator.generators.base_generator import BaseGenerator
 
 __all__ = ['main', 'BaseGenerator']

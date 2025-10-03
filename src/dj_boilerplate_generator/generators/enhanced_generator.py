@@ -129,7 +129,7 @@ X_FRAME_OPTIONS = 'DENY'
 
 # Static files with WhiteNoise
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Database URL support
 if os.environ.get('DATABASE_URL'):
@@ -270,17 +270,46 @@ DATABASES['default'] = {{
             project_path / 'static' / 'css',
             project_path / 'static' / 'js',
             project_path / 'static' / 'images',
+            # Templates
             project_path / 'templates',
+            project_path / 'templates' / 'admin',
+            project_path / 'templates' / 'registration',
+            # Requirements
             project_path / 'requirements',
+            # Documentation
             project_path / 'docs',
+            project_path / 'docs' / 'architecture',
+            project_path / 'docs' / 'deployment',
+            # Configuration
             project_path / 'config',
+            project_path / 'config' / 'environments',
+             # Scripts
             project_path / 'scripts',
+            project_path / 'scripts' / 'deployment',
+            project_path / 'scripts' / 'monitoring',
         ]
+
+        # Add SRE directories if enabled
+        if 'sre' in config['features']:
+            directories.extend([
+                project_path / 'monitoring',
+                project_path / 'monitoring' / 'dashboards',
+                project_path / 'monitoring' / 'alerts',
+            ])
+        
+         # Add Docker directories if enabled
+        if 'docker' in config['features']:
+            directories.extend([
+                project_path / 'docker',
+                project_path / 'docker' / 'development',
+                project_path / 'docker' / 'production',
+            ])
         
         for directory in directories:
             directory.mkdir(exist_ok=True)
             if 'apps' in str(directory):
                 (directory / '__init__.py').touch()
+
         
         print("✅ Created enterprise directory structure")
     
@@ -315,6 +344,7 @@ if os.environ.get('DOCKER_CONTAINER'):
             """)
         
         if 'sre' in config['features']:
+            
             configurations.append("""
 # SRE and Monitoring configurations
 INSTALLED_APPS.append('django_prometheus')
@@ -365,6 +395,7 @@ ENABLE_DOCKER={str('docker' in config['features']).lower()}
         # Create Docker files if enabled
         if 'docker' in config['features']:
             self._create_docker_configuration(project_path, config)
+        
         
         # Create basic core app
         self._create_core_app(project_path, config)
@@ -451,19 +482,96 @@ repos:
 """
     
     def _create_docker_configuration(self, project_path: Path, config: Dict):
-        """Create Docker configuration files"""
+        """Generate Docker configuration using f-strings."""
+
+        # Assign variables for clarity
+        python_version = config['python_version']
+        project_name = config['project_name']
+
+        # --- Dockerfile ---
         dockerfile = f"""
-FROM python:{config['python_version']}-slim
+    # Multi-stage Docker build for Enterprise Django
+    FROM python:{python_version}-slim as builder
 
-WORKDIR /app
-COPY requirements/production.txt .
-RUN pip install -r production.txt
+    # Install build dependencies
+    RUN apt-get update && apt-get install -y \\
+        gcc \\
+        postgresql-dev \\
+        && rm -rf /var/lib/apt/lists/*
 
-COPY . .
+    # Create virtual environment
+    RUN python -m venv /opt/venv
+    ENV PATH="/opt/venv/bin:$PATH"
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "{config['project_name']}.wsgi:application"]
-"""
-        (project_path / 'Dockerfile').write_text(dockerfile,encoding="utf-8")
+    # Install dependencies
+    COPY requirements/production.txt .
+    RUN pip install --upgrade pip
+    RUN pip install -r production.txt
+
+    # --- Runtime stage ---
+    FROM python:{python_version}-slim
+
+    # Install runtime dependencies
+    RUN apt-get update && apt-get install -y \\
+        libpq5 \\
+        && rm -rf /var/lib/apt/lists/*
+
+    # Copy virtual environment
+    COPY --from=builder /opt/venv /opt/venv
+    ENV PATH="/opt/venv/bin:$PATH"
+
+    # Create app user
+    RUN useradd --create-home --shell /bin/bash app
+    USER app
+    WORKDIR /home/app
+
+    # Copy project
+    COPY --chown=app:app . .
+
+    # Collect static files
+    RUN python manage.py collectstatic --noinput
+
+    # Run gunicorn
+    CMD ["gunicorn", "--bind", "0.0.0.0:8000", "{project_name}.wsgi:application"]
+    """
+        
+        # --- docker-compose.yml ---
+        compose_docker_file = f"""
+    version: '3.8'
+
+    services:
+    web:
+        build: .
+        command: gunicorn --bind 0.0.0.0:8000 {project_name}.wsgi:application
+        volumes:
+        - .:/app
+        ports:
+        - "8000:8000"
+        environment:
+        - DATABASE_URL=postgres://user:password@db:5432/{project_name}
+        - DJANGO_ENV=production
+        depends_on:
+        - db
+
+    db:
+        image: postgres:13
+        environment:
+        - POSTGRES_DB={project_name}
+        - POSTGRES_USER=user
+        - POSTGRES_PASSWORD=password
+        volumes:
+        - postgres_data:/var/lib/postgresql/data
+
+    volumes:
+    postgres_data:
+    """
+        
+        try:
+            (project_path / 'Dockerfile').write_text(dockerfile, encoding="utf-8")
+            (project_path / 'docker-compose.yml').write_text(compose_docker_file, encoding="utf-8")
+            print("✅ Docker configuration files created")
+        except Exception as e:
+            print(f"Error generating Docker configuration: {e}")
     
     def _create_core_app(self, project_path: Path, config: Dict):
         """Create a basic core app"""

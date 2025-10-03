@@ -25,8 +25,8 @@ except ImportError:
     QUESTIONARY_AVAILABLE = False
 
 # Local imports
-from generators.enhanced_generator import EnhancedProjectGenerator
-from utils.validators import ProjectValidator
+from .generators.enhanced_generator import EnhancedProjectGenerator
+from .utils.validators import ProjectValidator
 
 # Create console only if rich is available
 console = Console() if RICH_AVAILABLE else None
@@ -499,7 +499,7 @@ Advanced:
 🔧 [bold]What was generated:[/bold]
 • ✅ Django project using official startproject
 • ✅ Modular settings architecture  
-• ✅ Enterprise security configurations
+• ✅ { 'Enterprise security configurations' if 'security' in config['features'] else 'Standard security settings'}
 • ✅ Development tools and pre-commit hooks
 • ✅ {'Docker configuration' if 'docker' in config['features'] else ''}
 • ✅ {'SRE monitoring foundation' if 'sre' in config['features'] else ''}

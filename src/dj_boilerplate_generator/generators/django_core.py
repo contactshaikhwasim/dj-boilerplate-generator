@@ -12,8 +12,8 @@ from typing import Dict, List
 from django.core.management import execute_from_command_line
 from django.core.management.commands.startproject import Command as StartProjectCommand
 
-from utils.file_ops import FileOperations
-from utils.validators import ProjectValidator
+from dj_boilerplate_generator.utils.file_ops import FileOperations
+from  dj_boilerplate_generator.utils.validators import ProjectValidator
 
 
 class DjangoCoreGenerator:

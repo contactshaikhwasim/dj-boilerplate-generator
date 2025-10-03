@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import Dict, List
 import jinja2
 
-from utils.file_ops import FileOperations
-from utils.validators import ProjectValidator
+from dj_boilerplate_generator.utils.file_ops import FileOperations
+from  dj_boilerplate_generator.utils.validators import ProjectValidator
 
 
 class BaseGenerator:
@@ -130,7 +130,7 @@ elif env == 'testing':
     from .testing import *
 else:
     from .development import *
-""")
+""", encoding="utf-8")
     
     def generate_core_app(self, config: Dict):
         """Generate core application with enterprise patterns"""
@@ -214,7 +214,7 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
 """
-        (project_path / '.pre-commit-config.yaml').write_text(pre_commit_config)
+        (project_path / '.pre-commit-config.yaml').write_text(pre_commit_config, encoding="utf-8")
         
         # Docker configuration if enabled
         if 'docker' in config['features']:
@@ -244,7 +244,7 @@ PROMETHEUS_ENABLED=True
 HEALTH_CHECK_ENDPOINT=/health/
 """.format(project_name=config['project_name'])
         
-        (project_path / '.env.example').write_text(env_template)
+        (project_path / '.env.example').write_text(env_template, encoding="utf-8")
         
         # Security middleware configuration
         security_config = """
@@ -293,88 +293,94 @@ SECURITY_CONFIG = {
             'dev': '\n'.join(filter(None, dev_requirements)),
             'production': '\n'.join(filter(None, production_requirements))
         }
-    
+
     def _generate_docker_config(self, config: Dict, project_path: Path):
-        """Generate Docker configuration"""
+        """Generate Docker configuration using f-strings."""
+
+        # Assign variables for clarity
+        python_version = config['python_version']
+        project_name = config['project_name']
+
+        # --- Dockerfile ---
+        dockerfile = f"""
+    # Multi-stage Docker build for Enterprise Django
+    FROM python:{python_version}-slim as builder
+
+    # Install build dependencies
+    RUN apt-get update && apt-get install -y \\
+        gcc \\
+        postgresql-dev \\
+        && rm -rf /var/lib/apt/lists/*
+
+    # Create virtual environment
+    RUN python -m venv /opt/venv
+    ENV PATH="/opt/venv/bin:$PATH"
+
+    # Install dependencies
+    COPY requirements/production.txt .
+    RUN pip install --upgrade pip
+    RUN pip install -r production.txt
+
+    # --- Runtime stage ---
+    FROM python:{python_version}-slim
+
+    # Install runtime dependencies
+    RUN apt-get update && apt-get install -y \\
+        libpq5 \\
+        && rm -rf /var/lib/apt/lists/*
+
+    # Copy virtual environment
+    COPY --from=builder /opt/venv /opt/venv
+    ENV PATH="/opt/venv/bin:$PATH"
+
+    # Create app user
+    RUN useradd --create-home --shell /bin/bash app
+    USER app
+    WORKDIR /home/app
+
+    # Copy project
+    COPY --chown=app:app . .
+
+    # Collect static files
+    RUN python manage.py collectstatic --noinput
+
+    # Run gunicorn
+    CMD ["gunicorn", "--bind", "0.0.0.0:8000", "{project_name}.wsgi:application"]
+    """
         
-        # Dockerfile
-        dockerfile = """
-# Multi-stage Docker build for Enterprise Django
-FROM python:{python_version}-slim as builder
+        # --- docker-compose.yml ---
+        compose_docker_file = f"""
+    version: '3.8'
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    postgresql-dev \
-    && rm -rf /var/lib/apt/lists/*
+    services:
+    web:
+        build: .
+        command: gunicorn --bind 0.0.0.0:8000 {project_name}.wsgi:application
+        volumes:
+        - .:/app
+        ports:
+        - "8000:8000"
+        environment:
+        - DATABASE_URL=postgres://user:password@db:5432/{project_name}
+        - DJANGO_ENV=production
+        depends_on:
+        - db
 
-# Create virtual environment
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+    db:
+        image: postgres:13
+        environment:
+        - POSTGRES_DB={project_name}
+        - POSTGRES_USER=user
+        - POSTGRES_PASSWORD=password
+        volumes:
+        - postgres_data:/var/lib/postgresql/data
 
-# Install dependencies
-COPY requirements/production.txt .
-RUN pip install --upgrade pip
-RUN pip install -r production.txt
-
-# Runtime stage
-FROM python:{python_version}-slim
-
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y \
-    libpq5 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy virtual environment
-COPY --from=builder /opt/venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Create app user
-RUN useradd --create-home --shell /bin/bash app
-USER app
-WORKDIR /home/app
-
-# Copy project
-COPY --chown=app:app . .
-
-# Collect static files
-RUN python manage.py collectstatic --noinput
-
-# Run gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "{project_name}.wsgi:application"]
-""".format(python_version=config['python_version'], project_name=config['project_name'])
-        
-        (project_path / 'Dockerfile').write_text(dockerfile)
-        
-        # docker-compose.yml
-        compose_file = """
-version: '3.8'
-
-services:
-  web:
-    build: .
-    command: gunicorn --bind 0.0.0.0:8000 {project_name}.wsgi:application
     volumes:
-      - .:/app
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgres://user:password@db:5432/{project_name}
-      - DJANGO_ENV=production
-    depends_on:
-      - db
-
-  db:
-    image: postgres:13
-    environment:
-      - POSTGRES_DB={project_name}
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
-""".format(project_name=config['project_name'])
+    postgres_data:
+    """
         
-        (project_path / 'docker-compose.yml').write_text(compose_file, encoding="utf-8")
+        try:
+            (project_path / 'Dockerfile_ttt').write_text(dockerfile, encoding="utf-8")
+            (project_path / 'docker-compose.yml').write_text(compose_docker_file, encoding="utf-8")
+        except Exception as e:
+            print(f"Error generating Docker configuration: {e}")
