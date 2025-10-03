@@ -38,13 +38,14 @@ dependencies = [
 Homepage = "https://github.com/contactshaikhwasim/dj-boilerplate-generator"
 
 [project.scripts]
-django-enterprise = "dj_boilerplate_generator.cli:main"
+django-enterprise = "dj_boilerplate_generator.main:main"
 
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.packages.find]
-include = ["dj_boilerplate_generator"]
+where = ["src"]
+include = ["dj-boilerplate-generator"]
 
 [tool.setuptools.package-data]
-"dj_boilerplate_generator" = ["templates/phase1/**/*", "use", "utils/*"]
+"dj_boilerplate_generator" = [""]

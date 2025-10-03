@@ -1,0 +1,9 @@
+LICENSE
+README.md
+pyproject.toml
+src/dj_boilerplate_generator.egg-info/PKG-INFO
+src/dj_boilerplate_generator.egg-info/SOURCES.txt
+src/dj_boilerplate_generator.egg-info/dependency_links.txt
+src/dj_boilerplate_generator.egg-info/entry_points.txt
+src/dj_boilerplate_generator.egg-info/requires.txt
+src/dj_boilerplate_generator.egg-info/top_level.txt
