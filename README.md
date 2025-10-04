@@ -35,7 +35,7 @@ Perfect for:
 ---
 ## ☕ Support  
 
-If you find **Enterprise-Grade Structure** helpful, consider supporting me:  
+If you find **Django Enterprise Generator** helpful, consider supporting me:  
 
 <a href="https://www.buymeacoffee.com/wasimshaikh" target="_blank">
   <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="45" width="170">
