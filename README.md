@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://github.com/contactshaikhwasim/dj-boilerplate-generator/blob/main/src/dj_boilerplate_generator/images/logo.png?raw=true" alt="Py Env Studio Logo" width="150">
+</p>
+
 # Django Enterprise Generator 🚀  
 _The Ultimate Django Boilerplate Generator – Enterprise Edition_
 
