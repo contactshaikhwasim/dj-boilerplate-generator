@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
-    { name = "Enterprise Django Team", email = "contactshaikhwasim@gmail.com" }
+    { name = "HttpError451", email = "contactshaikhwasim@gmail.com" }
 ]
 keywords = ["django", "boilerplate", "generator", "enterprise"]
 
@@ -38,14 +38,15 @@ dependencies = [
 Homepage = "https://github.com/contactshaikhwasim/dj-boilerplate-generator"
 
 [project.scripts]
-django-enterprise = "dj_boilerplate_generator.main:main"
+django-enterprise = "dj_boilerplate_generator.cli:main"
 
 [tool.setuptools]
+package-dir = {"" = "src"}
 include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["dj-boilerplate-generator"]
+include = ["dj_boilerplate_generator*"]
 
 [tool.setuptools.package-data]
-"dj_boilerplate_generator" = [""]
+"dj_boilerplate_generator" = ["templates/phase1/**/*"]

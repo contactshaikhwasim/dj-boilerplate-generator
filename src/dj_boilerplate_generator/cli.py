@@ -25,8 +25,8 @@ except ImportError:
     QUESTIONARY_AVAILABLE = False
 
 # Local imports
-from .generators.enhanced_generator import EnhancedProjectGenerator
-from .utils.validators import ProjectValidator
+from dj_boilerplate_generator.generators.enhanced_generator import EnhancedProjectGenerator
+from dj_boilerplate_generator.utils.validators import ProjectValidator
 
 # Create console only if rich is available
 console = Console() if RICH_AVAILABLE else None

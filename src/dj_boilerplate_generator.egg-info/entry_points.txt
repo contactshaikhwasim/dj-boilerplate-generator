@@ -1,2 +1,2 @@
 [console_scripts]
-django-enterprise = dj_boilerplate_generator.main:main
+django-enterprise = dj_boilerplate_generator.cli:main
