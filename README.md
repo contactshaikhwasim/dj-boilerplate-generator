@@ -39,7 +39,7 @@ Perfect for:
 ---
 ## ☕ Support  
 
-If you find **Django Enterprise Generator** helpful, consider supporting me:  
+If you find **Dj Boilerplate Generator** helpful, consider supporting me:  
 
 [![GitHub Sponsors](https://img.shields.io/badge/Sponsor%20on-GitHub-24292e?logo=github&style=for-the-badge)](https://github.com/sponsors/contactshaikhwasim)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-yellow?logo=buymeacoffee&style=for-the-badge)](https://buymeacoffee.com/contactshaikhwasim)
